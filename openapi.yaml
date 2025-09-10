@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Diary API
+  version: 1.0.0
+
+paths:
+  /posts/today:
+    get:
+      summary: 今日の投稿を取得
+      description: 今日の日付に紐づく投稿を返す。存在しなければ null を返す。
+      responses:
+        '200':
+          description: 投稿データ
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  date:
+                    type: string
+                    format: date
+                    example: "2025-09-10"
+                  text:
+                    type: string
+                    example: "今日は公園に行った。"
+
+  /posts:
+    post:
+      summary: 投稿を新規作成または更新
+      description: 日付をキーにして、投稿が存在すれば更新、なければ新規作成する。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date, text]
+              properties:
+                date:
+                  type: string
+                  format: date
+                  example: "2025-09-10"
+                text:
+                  type: string
+                  example: "今日は公園に行った。"
+      responses:
+        '200':
+          description: 投稿が保存された
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  date:
+                    type: string
+                    format: date
+                  text:
+                    type: string
+
+  /posts/month:
+    get:
+      summary: 指定した月の投稿日付とID一覧を取得
+      parameters:
+        - in: query
+          name: year
+          schema:
+            type: integer
+          required: true
+          example: 2025
+        - in: query
+          name: month
+          schema:
+            type: integer
+          required: true
+          example: 9
+      responses:
+        '200':
+          description: 投稿日付とIDの配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    date:
+                      type: string
+                      format: date
+
+  /posts/{id}:
+    get:
+      summary: 投稿詳細を取得
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: 投稿詳細
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  date:
+                    type: string
+                    format: date
+                  text:
+                    type: string
+
+    post:
+      summary: 投稿要約を取得
+      description: text を生成AIに投げて要約を返す。
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: 要約
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                    example: "今日は公園に行ったことについての日記"
