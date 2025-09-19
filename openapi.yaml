@@ -1,4 +1,4 @@
-「サーバー側で日付を決めればフロントは今日の日付を渡さなくていい」openapi: 3.0.3
+openapi: 3.0.3
 info:
   title: Diary API
   version: 2.0.0
