@@ -1,13 +1,15 @@
-openapi: 3.0.3
+「サーバー側で日付を決めればフロントは今日の日付を渡さなくていい」openapi: 3.0.3
 info:
   title: Diary API
-  version: 1.0.0
+  version: 2.0.0
 
 paths:
   /posts/today:
     get:
       summary: 今日の投稿を取得
-      description: 今日の日付に紐づく投稿を返す。存在しなければ null を返す。
+      description: |
+        サーバー側で日付ライブラリを使って「今日」の日付を決定し、その日付に紐づく投稿を返す。
+        クライアントは日付を指定する必要はない。存在しなければ null を返す。
       responses:
         '200':
           description: 投稿データ
@@ -23,30 +25,26 @@ paths:
                   date:
                     type: string
                     format: date
-                    example: "2025-09-10"
+                    example: "2025-09-19"
                   text:
                     type: string
                     example: "今日は公園に行った。"
-
-  /posts:
     post:
-      summary: 投稿を新規作成または更新
-      description: 日付をキーにして、投稿が存在すれば更新、なければ新規作成する。
+      summary: 今日の投稿を新規作成または更新
+      description: |
+        サーバー側で日付ライブラリを使って「今日」の日付を決定し、その日付をキーに投稿を新規作成または更新する。
+        クライアントは日付を指定する必要はなく、本文(text)のみ送信すればよい。
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [date, text]
+              required: [text]
               properties:
-                date:
-                  type: string
-                  format: date
-                  example: "2025-09-10"
                 text:
                   type: string
-                  example: "今日は公園に行った。"
+                  example: "今日は図書館に行った。"
       responses:
         '200':
           description: 投稿が保存された
