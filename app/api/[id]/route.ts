@@ -3,19 +3,21 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db"; // @neondatabase/serverless の sql をexportしている前提
 
 // GET: 投稿詳細を取得
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number(params.id);
-  if (isNaN(id)) {
+export default async function GET({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const numId = Number(id);
+  if (isNaN(numId)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
   const rows = await sql`
     SELECT id, date, text
     FROM posts
-    WHERE id = ${id};
+    WHERE id = ${numId};
   `;
 
   if (rows.length === 0) {
@@ -28,17 +30,18 @@ export async function GET(
 // POST: 要約を返す（仮実装: text の冒頭20文字）
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = Number(params.id);
-  if (isNaN(id)) {
+  const { id } = await params;
+  const numId = Number(id);
+  if (isNaN(numId)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
   const rows = await sql`
     SELECT text
     FROM posts
-    WHERE id = ${id};
+    WHERE id = ${numId};
   `;
 
   if (rows.length === 0) {
