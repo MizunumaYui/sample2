@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db"; // @neondatabase/serverless の sql をexportしている前提
 
 // GET: 投稿詳細を取得
-export default async function GET({
+export async function GET({
   params,
 }: {
   params: Promise<{ id: string }>;
