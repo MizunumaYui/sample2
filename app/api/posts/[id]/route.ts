@@ -11,7 +11,7 @@ const openai = new OpenAI({
 // GET: 投稿詳細を取得
 export async function GET(
   _req: Request,
-  context: { params: { id: string } }
+  context: any
 ) {
   const numId = Number(context.params.id);
   if (isNaN(numId)) {
@@ -34,7 +34,7 @@ export async function GET(
 // POST: 要約を返す（生成AIを使用）
 export async function POST(
   _req: Request,
-  context: { params: { id: string } }
+  context: any
 ) {
   const numId = Number(context.params.id);
   if (isNaN(numId)) {
