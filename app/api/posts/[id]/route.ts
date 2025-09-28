@@ -11,9 +11,9 @@ const openai = new OpenAI({
 // GET: 投稿詳細を取得
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const numId = Number(params.id);
+  const numId = Number(context.params.id);
   if (isNaN(numId)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
@@ -34,9 +34,9 @@ export async function GET(
 // POST: 要約を返す（生成AIを使用）
 export async function POST(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const numId = Number(params.id);
+  const numId = Number(context.params.id);
   if (isNaN(numId)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
