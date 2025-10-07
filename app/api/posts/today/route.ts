@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 
-//投稿内容をUTF-8で表示
-export const runtime = "edge"; // ← 追加（任意）
-
-// UTF-8明示
-export const headers = {
-  "Content-Type": "application/json; charset=utf-8",
-};
 
 // ユーティリティ: 今日の日付を YYYY-MM-DD で取得
 function getToday(): string {
