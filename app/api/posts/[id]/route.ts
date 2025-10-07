@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
+export const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
+
 
 // GET: 投稿詳細を取得
 export async function GET(
@@ -35,11 +36,11 @@ export async function GET(
 // POST: 要約を返す（生成AIを使用）
 export async function POST(
   _req: Request,
-  context: unknown
+  context: { params: Promise<{ id: string }> }
 ) {
-  const params = (context as { params?: { id?: string } }).params;
-  const id = params?.id;
+  const { id } = await context.params;
   const numId = Number(id);
+
   if (!id || isNaN(numId)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
@@ -56,8 +57,9 @@ export async function POST(
 
   const text: string = rows[0].text;
 
+  // OpenRouter経由でNemotronモデルを使用
   const completion = await openai.chat.completions.create({
-    model: "google/gemini-2.0-flash-exp:free",
+    model: "nvidia/nemotron-nano-9b-v2:free",
     messages: [
       {
         role: "system",
