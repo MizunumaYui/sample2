@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import OpenAI from "openai";
 
-export const openai = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
