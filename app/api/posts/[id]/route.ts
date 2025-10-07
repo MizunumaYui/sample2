@@ -11,10 +11,9 @@ const openai = new OpenAI({
 // GET: 投稿詳細を取得
 export async function GET(
   _req: Request,
-  context: unknown
+  context: { params: Promise<{ id: string }> } // Promise型にする
 ) {
-  const params = (context as { params?: { id?: string } }).params;
-  const id = params?.id;
+  const { id } = await context.params;
   const numId = Number(id);
   if (!id || isNaN(numId)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
