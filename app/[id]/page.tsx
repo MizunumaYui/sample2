@@ -1,25 +1,52 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 
 export default function DetailPage() {
-  const router = useRouter(); // ← ここを追加
+  const router = useRouter();
+  const params = useParams();
+  const { id } = params;
 
-  const [text, setText] = useState(
-    "今日は内省と感謝の一日でした。午前中は日記を書き、人生のささやかな喜びを感謝しました。午後は新しいスキルを学ぶことに専念し、大きな進歩を遂げました。夕方には家族と静かな夕食を楽しみ、物語や笑いを分かち合いました。満足感と充実感を感じています。"
-  );
-  const [isSummarized, setIsSummarized] = useState(false);
+  const [date, setDate] = useState("");
+  const [text, setText] = useState("");
+  const [summary, setSummary] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // ダミー要約処理（実際はAPIを呼ぶ想定）
-  const handleSummarize = () => {
-    const summary =
-      "内省と感謝に満ちた一日。日記、学び、家族との時間を通じて充実感を得た。";
-    setText(summary);
-    setIsSummarized(true);
+  // 投稿詳細取得
+  useEffect(() => {
+    if (id) {
+      fetch(`/api/posts/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.date) setDate(data.date);
+          if (data.text) setText(data.text);
+        })
+        .catch((error) =>
+          console.error("投稿詳細の取得に失敗しました", error)
+        );
+    }
+  }, [id]);
+
+  // 要約処理
+  const handleSummarize = async () => {
+    setLoading(true);
+    setSummary(null);
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: "POST" });
+      const data = await res.json();
+      if (data.summary) {
+        setSummary(data.summary);
+      } else {
+        setSummary("要約を取得できませんでした。");
+      }
+    } catch {
+      setSummary("要約を取得できませんでした。");
+    }
+    setLoading(false);
   };
 
   return (
@@ -29,7 +56,7 @@ export default function DetailPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => router.back()}
+          onClick={() => router.push("/")}
           className="p-0"
         >
           <ArrowLeftIcon className="w-6 h-6 text-[#0c141c]" />
@@ -42,11 +69,17 @@ export default function DetailPage() {
       {/* メイン */}
       <main className="flex flex-col items-center justify-start px-4 py-5 w-full flex-1">
         <div className="flex flex-col max-w-[960px] w-full gap-6">
-          
           {/* 日付 */}
           <div>
             <h2 className="font-bold text-[32px] leading-10 [font-family:'Newsreader',Helvetica] text-[#0c141c]">
-              2024年7月12日の日記
+              {date
+                ? new Date(date).toLocaleDateString("ja-JP", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "日付読み込み中"}
+              の日記
             </h2>
           </div>
 
@@ -54,7 +87,11 @@ export default function DetailPage() {
           <Card className="w-full bg-[#f7f9fc] rounded-lg border border-solid border-[#cedbe8] px-6 py-4">
             <CardContent className="p-0">
               <p className="font-normal text-base leading-6 [font-family:'Newsreader',Helvetica] text-[#0c141c] whitespace-pre-wrap">
-                {text}
+                {loading
+                  ? "要約を生成中です..."
+                  : summary !== null
+                  ? summary
+                  : text}
               </p>
             </CardContent>
           </Card>
@@ -63,15 +100,23 @@ export default function DetailPage() {
           <div className="flex justify-start w-full">
             <Button
               onClick={handleSummarize}
-              disabled={isSummarized}
+              disabled={loading}
               className="min-w-[84px] h-10 px-4 bg-[#0c7ff2] hover:bg-[#0c7ff2]/90 rounded-lg"
             >
               <span className="[font-family:'Newsreader',Helvetica] font-bold text-[#f7f9fc] text-sm leading-[21px] whitespace-nowrap">
-                {isSummarized ? "要約済み" : "AIで要約"}
+                AIで要約
               </span>
             </Button>
+            {summary !== null && !loading && (
+              <Button
+                variant="ghost"
+                className="ml-4 text-[#0c7ff2] underline"
+                onClick={() => setSummary(null)}
+              >
+                元に戻す
+              </Button>
+            )}
           </div>
-
         </div>
       </main>
     </div>

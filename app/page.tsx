@@ -1,16 +1,82 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 
 const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default function HomePage() {
+  const router = useRouter();
+
   // 現在の年月
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth()); // 0-based（0=1月）
+
+  // Textarea の入力値を管理する state
+  const [text, setText] = useState("");
+  // 月ごとの投稿を保持する state（id も含む）
+  const [monthPosts, setMonthPosts] = useState<Array<{ id: number; date: string }>>([]);
+
+  // ページ初期描画時に今日の投稿を取得して初期値に設定
+  useEffect(() => {
+    const fetchTodayPost = async () => {
+      try {
+        const response = await fetch("/api/posts/today");
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.text) {
+            setText(data.text);
+          }
+        } else {
+          console.error("GET /api/posts/today リクエスト失敗");
+        }
+      } catch (error) {
+        console.error("エラーが発生しました", error);
+      }
+    };
+    fetchTodayPost();
+  }, []);
+
+  // currentYear, currentMonthが変更されたら月ごとの投稿を取得
+  useEffect(() => {
+    const fetchMonthPosts = async () => {
+      try {
+        const monthStr = String(currentMonth + 1).padStart(2, "0");
+        const response = await fetch(`/api/posts/month?year=${currentYear}&month=${monthStr}`);
+        if (response.ok) {
+          const data = await response.json();
+          setMonthPosts(data);
+        } else {
+          console.error("GET /api/posts/month リクエスト失敗");
+        }
+      } catch (error) {
+        console.error("エラー発生", error);
+      }
+    };
+    fetchMonthPosts();
+  }, [currentYear, currentMonth]);
+
+  // POST リクエストを送る関数：更新する
+  const handleUpdate = async () => {
+    if (!text) return;
+    try {
+      const response = await fetch("/api/posts/today", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (response.ok) {
+        console.log("更新成功");
+      } else {
+        console.error("更新失敗");
+      }
+    } catch (error) {
+      console.error("エラーが発生しました", error);
+    }
+  };
 
   // 現在の月の日数を取得
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -76,13 +142,19 @@ export default function HomePage() {
             
             <div className="inline-flex flex-wrap items-end gap-4 px-4 py-3">
               <div className="flex flex-col items-start flex-1">
-                <Textarea className="w-[500px] min-h-36 bg-[#f7f9fc] rounded-lg border border-[#cedbe8] resize-none" />
+                <Textarea
+                  className="w-[500px] min-h-36 bg-[#f7f9fc] rounded-lg border border-[#cedbe8] resize-none"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
               </div>
             </div>
 
-
             <div className="flex items-start px-4 py-3 w-full">
-              <Button className="min-w-[84px] px-4 py-2.5 bg-[#0c7ff2] rounded-lg hover:bg-[#0c7ff2]/90">
+              <Button
+                className="min-w-[84px] px-4 py-2.5 bg-[#0c7ff2] rounded-lg hover:bg-[#0c7ff2]/90"
+                onClick={handleUpdate}
+              >
                 <span className="text-[#f7f9fc] text-sm font-bold">更新する</span>
               </Button>
             </div>
@@ -135,10 +207,14 @@ export default function HomePage() {
                   <div key={i} className="flex items-start w-full">
                     {week.map((day, j) => {
                       if (day === null) {
-                        return (
-                          <div key={j} className="w-[47px] h-12"></div>
-                        );
+                        return (<div key={j} className="w-[47px] h-12"></div>);
                       }
+
+                      // api/posts/month のレスポンスから該当の日付の投稿を取得
+                      const postForDay = monthPosts.find((post) => {
+                        const postDay = new Date(post.date).getDate();
+                        return postDay === day;
+                      });
 
                       const isToday =
                         day === today.getDate() &&
@@ -146,25 +222,24 @@ export default function HomePage() {
                         currentYear === today.getFullYear();
 
                       return (
-                        <div
-                          key={j}
-                          className="flex flex-col w-[47px] h-12 items-center"
-                        >
+                        <div key={j} className="flex flex-col w-[47px] h-12 items-center relative">
                           <button
+                            onClick={() => {
+                              if (postForDay) {
+                                router.push(`/${postForDay.id}`);
+                              }
+                            }}
                             className={`flex items-center justify-center flex-1 w-full rounded-3xl ${
-                              isToday
-                                ? "bg-[#0c7ff2]"
-                                : "hover:bg-gray-100"
+                              isToday ? "bg-[#0c7ff2]" : "hover:bg-gray-100"
                             }`}
                           >
-                            <div
-                              className={`text-sm font-medium ${
-                                isToday ? "text-white" : "text-[#0c141c]"
-                              }`}
-                            >
+                            <div className={`text-sm font-medium ${isToday ? "text-white" : "text-[#0c141c]"}`}>
                               {day}
                             </div>
                           </button>
+                          {postForDay && (
+                            <div className="absolute bottom-1 w-2 h-2 bg-blue-200 rounded-full"></div>
+                          )}
                         </div>
                       );
                     })}
