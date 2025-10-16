@@ -1,105 +1,180 @@
-import Image from "next/image";
+"use client";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import React, { useState } from "react";
+import { Button } from "../components/ui/button";
+import { Textarea } from "../components/ui/textarea";
 
-export default function Home() {
+const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
+
+export default function HomePage() {
+  // 現在の年月
+  const today = new Date();
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth()); // 0-based（0=1月）
+
+  // 現在の月の日数を取得
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  // カレンダー生成（1〜日数を配列に）
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  // 月初の曜日を取得
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+
+  // 行ごと（週ごと）に分ける
+  const calendarDays = [];
+  let week = new Array(firstDay).fill(null); // 月初の空白
+  days.forEach((day) => {
+    week.push(day);
+    if (week.length === 7) {
+      calendarDays.push(week);
+      week = [];
+    }
+  });
+  if (week.length > 0) calendarDays.push(week);
+
+  // 月切り替え関数
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentYear(currentYear - 1);
+      setCurrentMonth(11);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentYear(currentYear + 1);
+      setCurrentMonth(0);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <p className="text-lg text-blue-600">
-          これは自分で追加したテキストです！
-        </p>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="flex flex-col items-start bg-white">
+      <div className="flex flex-col min-h-[800px] items-start w-full bg-[#f7f9fc]">
+        <header className="flex items-center justify-between px-10 py-3 w-full border-b border-[#e5e8ea]">
+          <div className="inline-flex items-center gap-4">
+            <img
+              className="flex-shrink-0"
+              alt="Depth frame"
+              src="/Depth 5, Frame 0.svg"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <h1 className="text-[#0c141c] text-lg font-bold">日記アプリ</h1>
+          </div>
+        </header>
+
+        <main className="flex items-start justify-center gap-1 px-6 py-5 w-full max-w-[1240px] mx-auto">
+          <section className="flex flex-col max-w-[920px] w-[584px] h-[695px] items-start">
+            <div className="flex flex-col items-start pt-5 pb-3 px-4 w-full">
+              <h2 className="text-[#0c141c] text-[28px] font-bold">
+                今日の出来事を書き留めましょう
+              </h2>
+            </div>
+            
+            <div className="inline-flex flex-wrap items-end gap-4 px-4 py-3">
+              <div className="flex flex-col items-start flex-1">
+                <Textarea className="w-[500px] min-h-36 bg-[#f7f9fc] rounded-lg border border-[#cedbe8] resize-none" />
+              </div>
+            </div>
+
+
+            <div className="flex items-start px-4 py-3 w-full">
+              <Button className="min-w-[84px] px-4 py-2.5 bg-[#0c7ff2] rounded-lg hover:bg-[#0c7ff2]/90">
+                <span className="text-[#f7f9fc] text-sm font-bold">更新する</span>
+              </Button>
+            </div>
+          </section>
+
+          {/* カレンダー */}
+          <aside className="flex flex-col w-[360px] h-[695px] items-start">
+            <div className="flex flex-wrap items-center justify-center gap-6 p-4 w-full">
+              <div className="flex flex-col min-w-72 max-w-[336px] items-start gap-0.5 flex-1">
+                <div className="flex justify-between p-1 w-full items-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-auto w-auto p-0"
+                    onClick={handlePrevMonth}
+                  >
+                    <ChevronLeftIcon className="w-6 h-6 text-[#0c141c]" />
+                  </Button>
+
+                  <div className="text-center flex-1 font-bold text-[#0c141c]">
+                    {currentYear}年 {currentMonth + 1}月
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-auto w-auto p-0"
+                    onClick={handleNextMonth}
+                  >
+                    <ChevronRightIcon className="w-6 h-6 text-[#0c141c]" />
+                  </Button>
+                </div>
+
+                {/* 曜日 */}
+                <div className="flex items-start w-full">
+                  {weekDays.map((day, i) => (
+                    <div
+                      key={i}
+                      className="flex w-[47px] h-12 items-center justify-center"
+                    >
+                      <div className="font-bold text-[#0c141c] text-[13px]">
+                        {day}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* カレンダー日付 */}
+                {calendarDays.map((week, i) => (
+                  <div key={i} className="flex items-start w-full">
+                    {week.map((day, j) => {
+                      if (day === null) {
+                        return (
+                          <div key={j} className="w-[47px] h-12"></div>
+                        );
+                      }
+
+                      const isToday =
+                        day === today.getDate() &&
+                        currentMonth === today.getMonth() &&
+                        currentYear === today.getFullYear();
+
+                      return (
+                        <div
+                          key={j}
+                          className="flex flex-col w-[47px] h-12 items-center"
+                        >
+                          <button
+                            className={`flex items-center justify-center flex-1 w-full rounded-3xl ${
+                              isToday
+                                ? "bg-[#0c7ff2]"
+                                : "hover:bg-gray-100"
+                            }`}
+                          >
+                            <div
+                              className={`text-sm font-medium ${
+                                isToday ? "text-white" : "text-[#0c141c]"
+                              }`}
+                            >
+                              {day}
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </main>
+      </div>
     </div>
   );
 }
