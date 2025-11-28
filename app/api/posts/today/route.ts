@@ -13,7 +13,7 @@ export async function GET() {
 
   const rows = await sql`
     SELECT id, date, text
-    FROM posts
+    FROM "Post"
     WHERE date = ${today};
   `;
 
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
   // INSERT して、date で衝突したら UPDATE
   const rows = await sql`
-    INSERT INTO posts (date, text)
+    INSERT INTO "Post" (date, text)
     VALUES (${today}, ${text})
     ON CONFLICT (date)
     DO UPDATE SET text = EXCLUDED.text

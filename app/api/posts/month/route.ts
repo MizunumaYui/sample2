@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
     const rows = await sql`
       SELECT id, date
-      FROM posts
+      FROM "Post"
       WHERE TO_CHAR(date, 'YYYY-MM') = ${yearMonth}
       ORDER BY date ASC
     `;

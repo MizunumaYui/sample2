@@ -4,6 +4,107 @@ info:
   version: 2.0.0
 
 paths:
+  /auth/signup:
+    post:
+      summary: アカウント作成
+      description: メールアドレスとパスワードを使用して新しいアカウントを作成します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "securePassword123"
+      responses:
+        '201':
+          description: アカウント作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  email:
+                    type: string
+        '400':
+          description: バリデーションエラー（メール重複など）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: サーバーエラー
+  
+  /auth/signin:
+    post:
+      summary: アカウント認証（ログイン）
+      description: |
+        入力されたメールアドレスとパスワードを users テーブルと照合し、
+        一致した場合はログイン成功としてユーザーIDを返す。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "securePassword123"
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  message:
+                    type: string
+                    example: "Login successful"
+        '401':
+          description: メールアドレスまたはパスワードが不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid email or password"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Server error"
+
+
+
   /posts/today:
     get:
       summary: 今日の投稿を取得
