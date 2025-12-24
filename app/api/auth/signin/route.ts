@@ -1,39 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/lib/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { signToken } from "@/lib/jwt";
 
-const prisma = new PrismaClient();
-
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { email, password } = body;
+  const { email, password } = await req.json();
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  if (!email || !password) {
+    return NextResponse.json(
+      { error: "email と password が必要です" },
+      { status: 400 }
+    );
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
   if (!user) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    return NextResponse.json(
+      { error: "メールアドレスまたはパスワードが違います" },
+      { status: 401 }
+    );
   }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid) {
+    return NextResponse.json(
+      { error: "メールアドレスまたはパスワードが違います" },
+      { status: 401 }
+    );
   }
 
-  const token = signToken({ id: user.id, email: user.email });
+  const token = signToken({ userId: user.id });
 
-  console.log('signin/route.ts: token generated', { tokenExists: !!token });
-
-  const response = NextResponse.json({ id: user.id, email: user.email, token });
-  response.cookies.set('token', token, {
+  const res = NextResponse.json({ success: true });
+  res.cookies.set("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60, // 1時間
+    sameSite: "lax",
+    path: "/",
   });
 
-  console.log('signin/route.ts: cookie set, response headers', { 
-    setCookie: response.headers.get('set-cookie') 
-  });
-
-  return response;
+  return res;
 }

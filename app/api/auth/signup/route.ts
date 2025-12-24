@@ -1,11 +1,9 @@
-import { PrismaClient } from '@/lib/generated/prisma/client';
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { signUpSchema } from '@/lib/validations/auth';
 import { ZodError } from 'zod';
 import { signToken } from '@/lib/jwt';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,28 +39,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // JWTトークンを生成
+    // JWTトークン生成
     const token = signToken({
-      id: user.id,
-      email: user.email,
+      userId: user.id,
     });
 
-    // レスポンスにトークンを含める
     const response = NextResponse.json(
       {
         id: user.id,
         email: user.email,
-        token: token,
       },
       { status: 201 }
     );
 
-    // トークンをクッキーに設定
+    // クッキーにJWTを保存
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60, // 1時間
+      path: '/',
     });
 
     return response;
@@ -73,6 +69,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
     console.error('Signup error:', error);
     return NextResponse.json(
       { error: 'アカウント作成に失敗しました' },
