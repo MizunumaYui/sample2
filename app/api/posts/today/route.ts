@@ -1,14 +1,30 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { verifyToken } from "@/lib/jwt";
+import { cookies } from "next/headers";
 
-
-// ユーティリティ: 今日の日付を YYYY-MM-DD で取得
 function getToday(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-// GET: 今日の投稿を取得
+// 🔑 async にする
+async function checkAuth() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) return null;
+  return verifyToken(token);
+}
+
 export async function GET() {
+  const user = await checkAuth();
+
+  if (!user) {
+    return NextResponse.json(
+      { error: "認証が必要です" },
+      { status: 401 }
+    );
+  }
+
   const today = getToday();
 
   const rows = await sql`
@@ -18,26 +34,4 @@ export async function GET() {
   `;
 
   return NextResponse.json(rows[0] ?? null);
-}
-
-
-//POST: 今日の投稿を新規作成 or 更新
-export async function POST(req: Request) {
-  const { text } = await req.json();
-  if (!text) {
-    return NextResponse.json({ error: "text is required" }, { status: 400 });
-  }
-
-  const today = getToday();
-
-  // INSERT して、date で衝突したら UPDATE
-  const rows = await sql`
-    INSERT INTO "Post" (date, text)
-    VALUES (${today}, ${text})
-    ON CONFLICT (date)
-    DO UPDATE SET text = EXCLUDED.text
-    RETURNING id, date, text;
-  `;
-
-  return NextResponse.json(rows[0], { status: 200 });
 }

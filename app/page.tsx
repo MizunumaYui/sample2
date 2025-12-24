@@ -17,6 +17,7 @@ export default function HomePage() {
 
   const [text, setText] = useState("");
   const [monthPosts, setMonthPosts] = useState<Array<{ id: number; date: string }>>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // 月ごとの投稿取得関数（キャッシュ回避用に timestamp 追加）
   const fetchMonthPosts = async (year = currentYear, month = currentMonth) => {
@@ -24,7 +25,10 @@ export default function HomePage() {
       const monthStr = String(month + 1).padStart(2, "0");
       const response = await fetch(
         `/api/posts/month?year=${year}&month=${monthStr}&t=${Date.now()}`,
-        { cache: "no-store" }
+        { 
+          cache: "no-store",
+          credentials: 'include'
+        }
       );
       if (response.ok) {
         const data = await response.json();
@@ -41,7 +45,9 @@ export default function HomePage() {
   useEffect(() => {
     const fetchTodayPost = async () => {
       try {
-        const res = await fetch("/api/posts/today");
+        const res = await fetch("/api/posts/today", {
+          credentials: 'include'
+        });
         if (res.ok) {
           const data = await res.json();
           if (data?.text) setText(data.text);
@@ -58,39 +64,42 @@ export default function HomePage() {
     fetchMonthPosts(currentYear, currentMonth);
   }, [currentYear, currentMonth]);
 
-  // 更新ボタン
-  const [isUpdating, setIsUpdating] = useState(false);
+  const handleUpdate = async () => {
+    if (!text) return;
 
-const handleUpdate = async () => {
-  if (!text) return;
+    setIsUpdating(true); // ← スピナー開始
+    try {
+      const response = await fetch("/api/posts", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: new Date().toISOString().split("T")[0],
+            text,
+        }),
+      });
 
-  setIsUpdating(true); // ← スピナー開始
-  try {
-    const response = await fetch("/api/posts/today", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    if (response.ok) {
-      // 月の投稿を再取得して丸印更新
-      await fetchMonthPosts(currentYear, currentMonth);
+      if (response.ok) {
+        // 月の投稿を再取得して丸印更新
+        await fetchMonthPosts(currentYear, currentMonth);
 
-      // 今日の投稿を再取得
-      const todayRes = await fetch("/api/posts/today");
-      if (todayRes.ok) {
-        const todayData = await todayRes.json();
-        if (todayData?.text) setText(todayData.text);
+        // 今日の投稿を再取得
+        const todayRes = await fetch("/api/posts/today", {
+          credentials: 'include'
+        });
+        if (todayRes.ok) {
+          const todayData = await todayRes.json();
+          if (todayData?.text) setText(todayData.text);
+        }
+      } else {
+        console.error("更新失敗");
       }
-    } else {
-      console.error("更新失敗");
+    } catch (error) {
+      console.error("エラーが発生しました", error);
+    } finally {
+      setIsUpdating(false); // ← スピナー終了
     }
-  } catch (error) {
-    console.error("エラーが発生しました", error);
-  } finally {
-    setIsUpdating(false); // ← スピナー終了
-  }
-};
-
+  };
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -200,13 +209,13 @@ const handleUpdate = async () => {
                       if (day === null) return <div key={j} className="w-[47px] h-12"></div>;
 
                       const postForDay = monthPosts.find((post) => {
-                const postDate = new Date(post.date);
-                return (
-                  postDate.getFullYear() === currentYear &&
-                  postDate.getMonth() === currentMonth &&
-                  postDate.getDate() === day
-                );
-                });
+                        const postDate = new Date(post.date);
+                        return (
+                          postDate.getFullYear() === currentYear &&
+                          postDate.getMonth() === currentMonth &&
+                          postDate.getDate() === day
+                        );
+                      });
 
                       const isToday =
                         day === today.getDate() &&

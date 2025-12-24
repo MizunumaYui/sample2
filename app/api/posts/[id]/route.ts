@@ -1,28 +1,42 @@
-// app/api/posts/[id]/route.ts
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { verifyToken } from "@/lib/jwt";
+import { cookies } from "next/headers";
 import OpenAI from "openai";
+
+// 認証チェック（Cookie ベース）
+async function checkAuth() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) return null;
+  return verifyToken(token);
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
 
-
-// GET: 投稿詳細を取得
+// GET: 投稿詳細
 export async function GET(
-  _req: Request,
-  context: { params: Promise<{ id: string }> } // Promise型にする
+  request: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
+  const auth = await checkAuth();
+  if (!auth) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const numId = Number(id);
+
   if (!id || isNaN(numId)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
   const rows = await sql`
     SELECT id, date, text
-    FROM posts
+    FROM "Post"
     WHERE id = ${numId};
   `;
 
@@ -33,11 +47,16 @@ export async function GET(
   return NextResponse.json(rows[0]);
 }
 
-// POST: 要約を返す（生成AIを使用）
+// POST: 要約生成
 export async function POST(
-  _req: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const auth = await checkAuth();
+  if (!auth) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const numId = Number(id);
 
@@ -47,7 +66,7 @@ export async function POST(
 
   const rows = await sql`
     SELECT text
-    FROM posts
+    FROM "Post"
     WHERE id = ${numId};
   `;
 
@@ -57,13 +76,12 @@ export async function POST(
 
   const text: string = rows[0].text;
 
-  // OpenRouter経由でNemotronモデルを使用
   const completion = await openai.chat.completions.create({
     model: "nvidia/nemotron-nano-9b-v2:free",
     messages: [
       {
         role: "system",
-        content: "あなたは文章を短く分かりやすく要約するアシスタントです。",
+        content: "あなたは文章を短くわかりやすく要約するアシスタントです。",
       },
       {
         role: "user",
@@ -72,8 +90,9 @@ export async function POST(
     ],
   });
 
-  const summary =
-    completion.choices[0]?.message?.content ?? "要約を生成できませんでした。";
-
-  return NextResponse.json({ summary });
+  return NextResponse.json({
+    summary:
+      completion.choices[0]?.message?.content ??
+      "要約を生成できませんでした。",
+  });
 }
