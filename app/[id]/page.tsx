@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, UserCircle } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
@@ -15,6 +15,7 @@ export default function DetailPage() {
   const [text, setText] = useState("");
   const [summary, setSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 投稿詳細取得
   useEffect(() => {
@@ -49,21 +50,62 @@ export default function DetailPage() {
     setLoading(false);
   };
 
+  const handleSignOut = async () => {
+    try {
+      const res = await fetch("/api/auth/signout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        window.location.href = "/signin";
+      } else {
+        console.error("サインアウトに失敗しました");
+      }
+    } catch (error) {
+      console.error("サインアウト中にエラーが発生しました", error);
+    }
+  };
+
   return (
     <div className="flex flex-col items-start relative bg-white min-h-screen">
       {/* ヘッダー */}
-      <header className="flex items-center gap-4 px-4 py-3 border-b border-solid border-[#e5e8ea] w-full">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push("/")}
-          className="p-0"
-        >
-          <ArrowLeftIcon className="w-6 h-6 text-[#0c141c]" />
-        </Button>
-        <h1 className="font-bold text-lg leading-[23px] [font-family:'Newsreader',Helvetica] text-[#0c141c]">
-          日記アプリ
-        </h1>
+      <header className="flex items-center justify-between px-4 py-3 border-b border-solid border-[#e5e8ea] w-full relative">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/")}
+            className="p-0"
+          >
+            <ArrowLeftIcon className="w-6 h-6 text-[#0c141c]" />
+          </Button>
+          <h1 className="font-bold text-lg leading-[23px] [font-family:'Newsreader',Helvetica] text-[#0c141c]">
+            日記アプリ
+          </h1>
+        </div>
+
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+          >
+            <UserCircle className="w-7 h-7 text-[#0c141c]" />
+          </Button>
+
+          {isMenuOpen && (
+            <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-md z-10">
+              <button
+                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+                onClick={handleSignOut}
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* メイン */}

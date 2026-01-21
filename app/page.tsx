@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, UserCircle } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -18,6 +18,7 @@ export default function HomePage() {
   const [text, setText] = useState("");
   const [monthPosts, setMonthPosts] = useState<Array<{ id: number; date: string }>>([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 月ごとの投稿取得関数（キャッシュ回避用に timestamp 追加）
   const fetchMonthPosts = async (year = currentYear, month = currentMonth) => {
@@ -134,13 +135,53 @@ export default function HomePage() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      const res = await fetch("/api/auth/signout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        // トークン削除後、サインイン画面へフルリロード
+        window.location.href = "/signin";
+      } else {
+        console.error("サインアウトに失敗しました");
+      }
+    } catch (error) {
+      console.error("サインアウト中にエラーが発生しました", error);
+    }
+  };
+
   return (
     <div className="flex flex-col items-start bg-white">
       <div className="flex flex-col min-h-[800px] items-start w-full bg-[#f7f9fc]">
-        <header className="flex items-center justify-between px-10 py-3 w-full border-b border-[#e5e8ea]">
+        <header className="flex items-center justify-between px-10 py-3 w-full border-b border-[#e5e8ea] relative">
           <div className="inline-flex items-center gap-4">
             <img className="flex-shrink-0" alt="Depth frame" src="/Depth 5, Frame 0.svg" />
             <h1 className="text-[#0c141c] text-lg font-bold">日記アプリ</h1>
+          </div>
+
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+            >
+              <UserCircle className="w-7 h-7 text-[#0c141c]" />
+            </Button>
+
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-md z-10">
+                <button
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+                  onClick={handleSignOut}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
