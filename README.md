@@ -1,3 +1,8 @@
+## AI要約日記アプリ
+日記を書くと、カレンダーから振り返ることが出来ます。日付を選択してその日記をAIが要約します。
+
+<img width="1866" height="739" alt="スクリーンショット (190)" src="https://github.com/user-attachments/assets/57485917-e83d-4c4f-9742-f46ce7b22ee1" />
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
